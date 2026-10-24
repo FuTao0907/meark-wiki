@@ -25,7 +25,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          # 注：远程仓库初始阶段未包含 yarn.lock，故不启用 cache；
+          # 本地同步 yarn.lock 后可恢复 cache: yarn 以加速构建
 
       - name: Install dependencies
         run: yarn install
