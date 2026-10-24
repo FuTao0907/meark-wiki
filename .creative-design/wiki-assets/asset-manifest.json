@@ -1,0 +1,41 @@
+{
+  "brief": ".creative-design/wiki-assets/brief.md",
+  "version": "1",
+  "items": [
+    {
+      "id": "hero-bookshelf",
+      "use": "首页 hero 全屏背景（暗色照片 + brightness 0.7）",
+      "method": "image_gen",
+      "ratio": "16:9",
+      "consumer": "src/pages/index.astro hero"
+    },
+    {
+      "id": "paper-desk",
+      "use": "首页 stats/list 区氛围图（纸页细节）",
+      "method": "image_gen",
+      "ratio": "4:3",
+      "consumer": "src/pages/index.astro"
+    },
+    {
+      "id": "index-cards",
+      "use": "分类区/列表区氛围图（索引卡）",
+      "method": "image_gen",
+      "ratio": "4:3",
+      "consumer": "src/pages/index.astro"
+    },
+    {
+      "id": "library-aisle",
+      "use": "列表页顶部氛围图（图书馆纵深）",
+      "method": "image_gen",
+      "ratio": "16:9",
+      "consumer": "src/pages/knowledge/*"
+    },
+    {
+      "id": "desk-writing",
+      "use": "文章页氛围图（书桌与钢笔书写）",
+      "method": "image_gen",
+      "ratio": "4:3",
+      "consumer": "src/pages/knowledge/[category]/[slug].astro"
+    }
+  ]
+}
