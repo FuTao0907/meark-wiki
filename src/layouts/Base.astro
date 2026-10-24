@@ -1,0 +1,157 @@
+---
+import { CATEGORIES } from '../lib/knowledge';
+
+interface Props {
+  title?: string;
+  description?: string;
+  activeCategory?: string;
+  /** 首页 hero 全屏时不显示顶部导航 */
+  hideNav?: boolean;
+}
+
+const {
+  title = 'meark-wiki · 个人知识库',
+  description = '沉淀学过与搜过的知识',
+  activeCategory,
+  hideNav = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    {!hideNav && (
+      <header class="site-header">
+        <div class="nav-inner">
+          <a class="wordmark" href="/">meark-wiki</a>
+          <nav class="nav-links" aria-label="主导航">
+            <a href="/knowledge/" class:list={{ 'nav-link': true, active: activeCategory === '' }}>全部知识</a>
+            {CATEGORIES.map((c) => (
+              <a
+                href={`/knowledge/${c.key}/`}
+                class:list={{ 'nav-link': true, active: activeCategory === c.key }}
+              >
+                {c.name}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </header>
+    )}
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span class="footer-mark">meark-wiki</span>
+        <span class="footer-note">meark.cn 网站系 · GitHub Pages</span>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    /* Walnut and tan —— design-taste 方向定稿 */
+    --bg: #2b2216;
+    --surface: #382d1e;
+    --ink: #e4e2da;
+    --muted: #a39a8b;
+    --accent: #bda38b;
+    --accent-ink: #2b2216;
+    --field: #cbb293;
+    --field-ink: #1c150d;
+    --field-muted: #45382a;
+
+    --font-display: ui-sans-serif, system-ui, -apple-system, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    --font-body: Georgia, 'Times New Roman', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+
+    --max-width: 1080px;
+    --gap: 1.5rem;
+    --radius: 0; /* 全站直角，印刷物气质 */
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+
+  /* 顶部导航：无边框、无玻璃，纯文字条 */
+  .site-header { padding: 0 var(--gap); }
+  .nav-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1.4rem 0;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .nav-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+  .nav-link {
+    text-decoration: none;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  .nav-link:hover { color: var(--ink); }
+  .nav-link.active { color: var(--accent); }
+
+  main { max-width: var(--max-width); margin: 0 auto; padding: 3rem var(--gap) 4rem; }
+
+  /* 页脚：物件背面，名称放大收尾 */
+  .site-footer { padding: 0 var(--gap) 3.5rem; }
+  .footer-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding-top: 2.5rem;
+    border-top: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .footer-mark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.9rem;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .footer-note { color: var(--muted); font-size: 0.9rem; }
+
+  @media (max-width: 640px) {
+    .nav-inner { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+    .nav-links { gap: 1rem; }
+    main { padding-top: 2rem; }
+    .footer-inner { flex-direction: column; gap: 0.4rem; }
+  }
+</style>

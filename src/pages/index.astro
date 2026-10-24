@@ -1,15 +1,371 @@
 ---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { CATEGORIES } from '../lib/knowledge';
+
+const posts = await getCollection('knowledge');
+const sorted = [...posts].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const recent = sorted.slice(0, 5);
+const total = posts.length;
+const lastUpdated = sorted[0]?.data.pubDate.toISOString().slice(0, 10) ?? '—';
+
+const counts = new Map<string, number>();
+for (const p of posts) {
+  const cat = p.slug.split('/')[0];
+  counts.set(cat, (counts.get(cat) ?? 0) + 1);
+}
 ---
 
-<html lang="zh-CN">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>meark-wiki</title>
-	</head>
-	<body>
-		<h1>meark-wiki</h1>
-	</body>
-</html>
+<Base title="meark-wiki · 个人知识库" description="沉淀学过与搜过的知识" hideNav>
+  <!-- Hero：暗色书房上的一张纸色卡片 -->
+  <section class="hero" id="hero">
+    <img class="hero-bg" src="/images/hero-bookshelf.jpg" alt="" width="2730" height="1536" fetchpriority="high" />
+    <div class="hero-card" id="heroCard">
+      <h1 class="card-top">
+        <span class="w1">meark</span>
+        <span class="w2">wiki</span>
+        <span class="w3">知识库</span>
+      </h1>
+      <div class="card-mid">
+        <p class="facts">{total} 篇文章 · {CATEGORIES.length} 个分类 · 更新于 {lastUpdated}</p>
+        <p class="note">把自己学过、以及通过 AI 搜索后总结的知识，<br />一点点沉淀成体系。</p>
+      </div>
+      <div class="card-bottom">
+        <a class="btn" href="/knowledge/">浏览全部知识</a>
+        <a class="textlink" href="#stats">先看看 ↓</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats：数字列 -->
+  <section class="stats reveal" id="stats">
+    <div class="stat reveal-d">
+      <span class="stat-num">{total}</span>
+      <span class="stat-label">篇文章</span>
+    </div>
+    <div class="stat reveal-d">
+      <span class="stat-num">{CATEGORIES.length}</span>
+      <span class="stat-label">个分类</span>
+    </div>
+    <div class="stat reveal-d">
+      <span class="stat-num">{lastUpdated}</span>
+      <span class="stat-label">最近更新</span>
+    </div>
+  </section>
+
+  <!-- 分类：打印目录纸 -->
+  <section class="categories reveal" id="categories">
+    <div class="sheet-head reveal-d">
+      <h2>知识分类</h2>
+      <p>按领域归档，随学随记。</p>
+    </div>
+    <div class="cat-sheet reveal-d">
+      <div class="cat-list">
+        {CATEGORIES.map((c) => (
+          <a class="cat-row" href={`/knowledge/${c.key}/`}>
+            <span class="cat-name">{c.name}</span>
+            <span class="cat-desc">{c.description}</span>
+            <span class="cat-count">{counts.get(c.key) ?? 0} 篇</span>
+          </a>
+        ))}
+      </div>
+      <div class="sheet-imgs">
+        <img class="sheet-img" src="/images/paper-desk.jpg" alt="书桌上摊开的纸页与钢笔" width="720" height="540" loading="lazy" />
+        <img class="sheet-img" src="/images/index-cards.jpg" alt="一叠空白索引卡" width="720" height="540" loading="lazy" />
+      </div>
+    </div>
+  </section>
+
+  <!-- 最近更新：另一张纸 -->
+  <section class="recent reveal">
+    <div class="sheet-head reveal-d">
+      <h2>最近更新</h2>
+      <p>最新的沉淀。</p>
+    </div>
+    <div class="recent-sheet reveal-d">
+      <ul class="post-list">
+        {recent.map((p) => {
+          const [cat] = p.slug.split('/');
+          const catName = CATEGORIES.find((c) => c.key === cat)?.name ?? cat;
+          return (
+            <li>
+              <a class="post-item" href={`/knowledge/${p.slug}/`}>
+                <span class="post-date">{p.data.pubDate.toISOString().slice(0, 10)}</span>
+                <span class="post-title">{p.data.title}</span>
+                <span class="post-cat">{catName}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      <img class="sheet-img desk" src="/images/desk-writing.jpg" alt="夜晚书桌边握着钢笔书写" width="720" height="540" loading="lazy" />
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ===== Hero ===== */
+  .hero {
+    height: 100vh;
+    min-height: 640px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--gap);
+    background-color: var(--bg);
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.62);
+    animation: hero-zoom 26s ease-in-out infinite alternate;
+    transform-origin: center;
+  }
+  @keyframes hero-zoom {
+    from { transform: scale(1); }
+    to { transform: scale(1.06); }
+  }
+
+  .hero-card {
+    position: relative;
+    z-index: 1;
+    width: min(640px, 92vw);
+    min-height: 56vh;
+    background: var(--field);
+    color: var(--field-ink);
+    padding: clamp(1.5rem, 4vw, 2.4rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--field-ink);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .card-top .w1, .card-top .w2, .card-top .w3 { font-size: clamp(1.5rem, 2.8vw, 2rem); }
+
+  .facts {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--field-muted);
+    margin: 0 0 0.8rem;
+  }
+  .note {
+    font-size: 1.2rem;
+    line-height: 1.55;
+    color: var(--field-ink);
+    margin: 0;
+    max-width: 34ch;
+  }
+
+  .card-bottom {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .btn {
+    display: inline-block;
+    background: var(--field-ink);
+    color: var(--field);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.2;
+    padding: 0.9rem 1.7rem;
+    text-decoration: none;
+    border-radius: var(--radius);
+    min-height: 48px;
+  }
+  .btn:hover { background: #000; color: #fff; }
+  .textlink {
+    color: var(--field-ink);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    font-size: 1rem;
+  }
+
+  /* 滚动后卡片缩为左下角票根 */
+  .hero-card.stub {
+    position: fixed;
+    top: auto;
+    left: 20px;
+    bottom: 20px;
+    width: 148px;
+    min-height: 0;
+    padding: 0.9rem 1rem;
+    z-index: 50;
+    cursor: pointer;
+  }
+  .hero-card.stub .card-top { display: none; }
+  .hero-card.stub .card-mid, .hero-card.stub .card-bottom { display: none; }
+  .hero-card.stub::after {
+    content: 'meark-wiki ↑';
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--field-ink);
+  }
+
+  /* ===== Stats ===== */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    padding: 5rem 0;
+  }
+  .stat { display: flex; flex-direction: column; gap: 0.3rem; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .stat-label { color: var(--muted); font-size: 0.9rem; }
+
+  /* ===== 纸面区（分类 / 最近） ===== */
+  .categories, .recent { padding: 3.5rem 0; }
+  .sheet-head { margin-bottom: 1.5rem; }
+  .sheet-head h2 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.3rem;
+  }
+  .sheet-head p { color: var(--muted); margin: 0; }
+
+  .cat-sheet, .recent-sheet {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    background: var(--field);
+    color: var(--field-ink);
+  }
+  .cat-list { padding: 1.8rem 2rem; }
+  .cat-row {
+    display: grid;
+    grid-template-columns: 150px 1fr auto;
+    align-items: baseline;
+    gap: 1.25rem;
+    padding: 1.15rem 0.75rem;
+    text-decoration: none;
+    color: var(--field-ink);
+  }
+  .cat-row:hover { background: rgba(28, 21, 13, 0.06); }
+  .cat-row:last-child { padding-bottom: 0.4rem; }
+  .cat-row:hover .cat-name { text-decoration: underline; text-underline-offset: 5px; }
+  .cat-name { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; }
+  .cat-desc { color: var(--field-muted); font-size: 0.95rem; }
+  .cat-count { font-family: var(--font-display); font-weight: 600; font-size: 0.875rem; color: var(--field-muted); }
+
+  .sheet-imgs { display: grid; grid-template-rows: 1fr 1fr; }
+  .sheet-img { width: 100%; height: 100%; object-fit: cover; }
+
+  .recent-sheet { grid-template-columns: 300px 1fr; }
+  .recent-sheet .sheet-img { order: -1; }
+  .post-list { list-style: none; margin: 0; padding: 1.8rem 2rem; }
+  .post-item {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    align-items: baseline;
+    gap: 1.25rem;
+    padding: 0.95rem 0.75rem;
+    text-decoration: none;
+    color: var(--field-ink);
+  }
+  .post-item:hover { background: rgba(28, 21, 13, 0.06); }
+  .post-item:last-child { padding-bottom: 0.3rem; }
+  .post-item:hover .post-title { text-decoration: underline; text-underline-offset: 4px; }
+  .post-date { font-family: var(--font-display); font-weight: 500; font-size: 0.875rem; color: var(--field-muted); }
+  .post-title { font-weight: 600; font-size: 1.05rem; }
+  .post-cat { font-family: var(--font-display); font-weight: 500; font-size: 0.875rem; color: var(--field-muted); }
+
+  /* ===== Entrance（step 9：区块进入动画） ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal-d { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in .reveal-d, .reveal-d.in { opacity: 1; transform: none; }
+  .reveal.in .reveal-d:nth-child(2) { transition-delay: 0.08s; }
+  .reveal.in .reveal-d:nth-child(3) { transition-delay: 0.16s; }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-bg, .hero-card, .reveal, .reveal-d { opacity: 1; transform: none; animation: none; transition: none; }
+  }
+
+  @media (max-width: 760px) {
+    .hero { height: 100svh; min-height: 560px; }
+    .hero-card { width: calc(100vw - 32px); min-height: 64vh; }
+    .hero-card.stub { width: 128px; }
+
+    .stats { grid-template-columns: 1fr; gap: 1.6rem; padding: 3.5rem 0; }
+
+    .cat-sheet, .recent-sheet { grid-template-columns: 1fr; }
+    .sheet-imgs, .recent-sheet .sheet-img { order: 0; }
+    .sheet-imgs { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+    .sheet-imgs .sheet-img, .recent-sheet .sheet-img { height: 180px; }
+    .cat-list, .post-list { padding: 1.4rem 1.25rem; }
+    .cat-row { grid-template-columns: 1fr auto; }
+    .cat-desc { grid-column: 1 / -1; }
+    .post-item { grid-template-columns: 1fr auto; }
+    .post-date { font-size: 0.875rem; }
+  }
+</style>
+
+<script>
+  // 滚动后卡片缩为左下角票根（signature move）
+  const hero = document.getElementById('hero');
+  const card = document.getElementById('heroCard');
+  if (hero && card) {
+    const onScroll = () => {
+      const threshold = hero.offsetHeight * 0.72;
+      const nearBottom = window.innerHeight + window.scrollY > document.body.scrollHeight - 320;
+      if (window.scrollY > threshold && !nearBottom) {
+        card.classList.add('stub');
+      } else {
+        card.classList.remove('stub');
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    card.addEventListener('click', () => {
+      if (card.classList.contains('stub')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+
+  // 区块进入动画（entrance）
+  const reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.15 }
+    );
+    reveals.forEach((el) => io.observe(el));
+  } else {
+    reveals.forEach((el) => el.classList.add('in'));
+  }
+</script>
