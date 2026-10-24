@@ -1,0 +1,165 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { getCategory } from '../../../lib/knowledge';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('knowledge');
+  return posts.map((p) => {
+    const [cat, ...rest] = p.slug.split('/');
+    return { params: { category: cat, slug: rest.join('/') } };
+  });
+}
+
+const { category, slug } = Astro.props;
+const catInfo = getCategory(category);
+
+const all = await getCollection('knowledge');
+const post = all.find((p) => p.slug === `${category}/${slug}`);
+
+if (!post) {
+  return Astro.redirect('/knowledge/');
+}
+
+const { Content } = await render(post);
+---
+
+<Base title={`${post.data.title} · meark-wiki`} activeCategory={category}>
+  <article class="paper">
+    <header class="article-head">
+      <p class="crumb">
+        <a href="/knowledge/">全部知识</a>
+        {' / '}
+        <a href={`/knowledge/${category}/`}>{catInfo?.name ?? category}</a>
+      </p>
+      <h1>{post.data.title}</h1>
+      {post.data.description && <p class="lede">{post.data.description}</p>}
+      <p class="meta">
+        <time datetime={post.data.pubDate.toISOString()}>
+          {post.data.pubDate.toISOString().slice(0, 10)}
+        </time>
+        {post.data.updatedDate && (
+          <>
+            {' · 更新于 '}
+            <time datetime={post.data.updatedDate.toISOString()}>
+              {post.data.updatedDate.toISOString().slice(0, 10)}
+            </time>
+          </>
+        )}
+        {post.data.tags.length > 0 && (
+          <span class="tags">{post.data.tags.map((t) => `#${t}`).join(' ')}</span>
+        )}
+      </p>
+    </header>
+
+    <div class="article-body">
+      <Content />
+    </div>
+
+    <footer class="article-foot">
+      <a href="/knowledge/" class="back-link">← 返回全部知识</a>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  /* 文章 = 一张纸 */
+  .paper {
+    background: var(--field);
+    color: var(--field-ink);
+    padding: clamp(2rem, 6vw, 4rem) clamp(1.5rem, 7vw, 4.5rem) 3rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .article-head { margin-bottom: 2.5rem; }
+  .crumb { color: var(--field-muted); font-size: 0.92rem; margin: 0 0 0.9rem; }
+  .crumb a { color: var(--field-muted); text-decoration: none; }
+  .crumb a:hover { color: var(--field-ink); text-decoration: underline; }
+  .article-head h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.9rem;
+  }
+  .lede { font-size: 1.12rem; line-height: 1.6; color: var(--field-muted); margin: 0 0 0.8rem; }
+  .meta {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--field-muted);
+    margin: 0;
+  }
+  .tags { margin-left: 0.75rem; }
+
+  /* 正文排版（纸页上的墨色文字） */
+  .article-body :global(h2) {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    margin: 2.4rem 0 0.8rem;
+    color: var(--field-ink);
+  }
+  .article-body :global(h3) {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: 1.9rem 0 0.6rem;
+    color: var(--field-ink);
+  }
+  .article-body :global(p) { margin: 0 0 1.15rem; }
+  .article-body :global(ul), .article-body :global(ol) { margin: 0 0 1.15rem; padding-left: 1.5rem; }
+  .article-body :global(li) { margin-bottom: 0.4rem; }
+  .article-body :global(a) { color: var(--field-ink); text-decoration: underline; text-underline-offset: 3px; }
+  .article-body :global(strong) { font-weight: 700; }
+  .article-body :global(blockquote) {
+    margin: 1.4rem 0;
+    padding: 0.25rem 0 0.25rem 1.1rem;
+    border-left: 3px solid var(--field-ink);
+    color: var(--field-muted);
+    font-style: italic;
+  }
+  .article-body :global(code) {
+    font-size: 0.92em;
+    background: rgba(28, 21, 13, 0.08);
+    padding: 0.15em 0.4em;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+  .article-body :global(pre) {
+    background: #201810;
+    color: #efe7d8;
+    padding: 1.3rem 1.5rem;
+    overflow-x: auto;
+    margin: 0 0 1.3rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+  .article-body :global(pre code) { background: transparent; padding: 0; }
+  .article-body :global(table) { border-collapse: collapse; width: 100%; margin: 0 0 1.3rem; font-size: 0.95rem; }
+  .article-body :global(th), .article-body :global(td) {
+    border: 1px solid rgba(28, 21, 13, 0.3);
+    padding: 0.55rem 0.8rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .article-body :global(th) { background: rgba(28, 21, 13, 0.06); font-family: var(--font-display); font-weight: 600; }
+  .article-body :global(hr) { border: none; border-top: 2px solid rgba(28, 21, 13, 0.3); margin: 2.2rem 0; }
+  .article-body :global(img) { margin: 1.4rem 0; }
+
+  .article-foot {
+    margin-top: 3rem;
+    padding-top: 1.6rem;
+    border-top: 2px solid rgba(28, 21, 13, 0.3);
+  }
+  .back-link { color: var(--field-muted); text-decoration: none; font-size: 0.95rem; }
+  .back-link:hover { color: var(--field-ink); text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .paper { margin: 0 -0.5rem; }
+    .article-head h1 { font-size: 1.6rem; }
+    .meta { font-size: 0.82rem; }
+  }
+</style>
